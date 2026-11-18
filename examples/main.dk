@@ -1,0 +1,83 @@
+import { add } from "math/utils";
+import { Animal, Dog } from "animals/dog";
+
+// Variables, types, and lists
+variable number: int = 10;
+variable scores: [int] = [90, 85, 70];
+
+type UserId = int;
+struct Point {
+    variable x: float;
+    variable y: float;
+}
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+function makeUserId(n: int) -> UserId {
+    return n;
+}
+
+function origin() -> Point {
+    return Point { x: 0.0, y: 0.0 };
+}
+
+function nextColor(color: Color) -> Color {
+    if color == Color.Red {
+        return Color.Green;
+    } else if color == Color.Green {
+        return Color.Blue;
+    } else {
+        return Color.Red;
+    }
+}
+
+if number > 10 {
+    terminal.print("big");
+} else if number == 10 {
+    terminal.print("ten");
+} else {
+    terminal.print("small");
+}
+
+while number > 0 {
+    number -= 1;
+    if number == 5 {
+        break;
+    }
+}
+
+for i in 0..5 {
+    terminal.print(i);
+}
+
+for score in scores {
+    terminal.print(score);
+}
+
+function main() {
+    variable total = add(number, 5);
+    terminal.print("Total: " + total);
+
+    variable pet: Animal = new Dog("Rex", 3, "Beagle");
+    pet.speak();
+    pet.birthday();
+    terminal.print(pet.age);
+
+    variable id: UserId = makeUserId(42);
+    variable point: Point = Point { x: 3.0, y: 4.0 };
+    point.x += 1.0;
+    variable favorite: Color = Color.Blue;
+    favorite = nextColor(favorite);
+    terminal.print(favorite == Color.Red);
+
+    terminal.print("What is your name?");
+    variable answer: string = terminal.read() ?? "stranger";
+    terminal.print("Hello, " + answer);
+
+    terminal.print("How old are you?");
+    variable age: int = terminal.readInt() ?? 0;
+    terminal.print("Next year you will be " + (age + 1));
+}

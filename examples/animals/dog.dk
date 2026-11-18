@@ -1,0 +1,30 @@
+export class Animal {
+    variable name: string;
+    variable age: int;
+
+    constructor(name: string, age: int) {
+        this.name = name;
+        this.age = age;
+    }
+
+    function speak() {
+        terminal.print(this.name + " makes a sound");
+    }
+
+    function birthday() {
+        this.age += 1;
+    }
+}
+
+export class Dog extends Animal {
+    variable breed: string;
+
+    constructor(name: string, age: int, breed: string) {
+        super(name, age);
+        this.breed = breed;
+    }
+
+    override function speak() {
+        terminal.print(this.name + " says woof");
+    }
+}

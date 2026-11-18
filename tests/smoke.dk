@@ -1,0 +1,34 @@
+import { add } from "../examples/math/utils";
+import { Animal, Dog } from "../examples/animals/dog";
+
+type Score = int;
+struct Point {
+    variable x: int;
+    variable y: int;
+}
+enum Color { Red, Green }
+
+function sum(values: [int]) -> Score {
+    variable total: Score = 0;
+    for value in values {
+        total += value;
+    }
+    return total;
+}
+
+function main() {
+    variable point: Point = Point { x: 2, y: 3 };
+    point.x += 1;
+    variable color: Color = Color.Red;
+    if color == Color.Red {
+        terminal.print(add(sum([point.x, point.y]), 4));
+    }
+
+    variable pet: Animal = new Dog("Rex", 2, "Collie");
+    pet.speak();
+    pet.birthday();
+    terminal.print(pet.age);
+
+    variable optional = null;
+    terminal.print(optional ?? "fallback");
+}
