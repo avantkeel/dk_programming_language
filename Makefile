@@ -48,9 +48,31 @@ test: $(TARGET)
 # Starts a throwaway HTTP server on 127.0.0.1:8765 (needs python3), runs the
 # HTTP tests against it, then stops it.
 test-http: $(TARGET)
-	python3 tests/http_server.py 8765 & server=$$!; sleep 1; \
-	./$(TARGET) tests/http_local.dk; status=$$?; \
-	kill $$server 2>/dev/null; exit $$status
+	python3 tests/http_server.py 8765 & server=$$!; \
+	cleanup() { \
+		if [ -n "$$server" ]; then \
+			kill "$$server" 2>/dev/null || true; \
+			wait "$$server" 2>/dev/null || true; \
+		fi; \
+	}; \
+	trap cleanup EXIT; \
+	ready=0; attempt=0; \
+	while [ $$attempt -lt 50 ]; do \
+		if ! kill -0 "$$server" 2>/dev/null; then \
+			wait "$$server"; server_status=$$?; server=; \
+			echo "HTTP test server exited before becoming ready (status $$server_status)" >&2; \
+			exit 1; \
+		fi; \
+		if python3 -c 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8765/json", timeout=0.2).read()' >/dev/null 2>&1; then \
+			ready=1; break; \
+		fi; \
+		attempt=$$((attempt + 1)); sleep 0.1; \
+	done; \
+	if [ $$ready -ne 1 ]; then \
+		echo "HTTP test server did not become ready at 127.0.0.1:8765 after 50 attempts" >&2; \
+		exit 1; \
+	fi; \
+	./$(TARGET) tests/http_local.dk
 
 clean:
 	rm -rf bin
