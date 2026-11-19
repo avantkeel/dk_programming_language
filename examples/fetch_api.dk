@@ -1,0 +1,19 @@
+// Fetch JSON from a public HTTPS API and read fields from it.
+http.timeout(15);
+
+variable res = http.get("https://api.github.com/repos/torvalds/linux",
+                        ["Accept: application/vnd.github+json"]);
+if res == null {
+    terminal.print("Request failed: " + http.lastError());
+} else if !res.ok {
+    terminal.print("Server said " + res.status);
+    variable problem = json.parse(res.body);
+    terminal.print(json.get(problem, "message") ?? res.body);
+} else {
+    variable repo = json.parse(res.body);
+    terminal.print(repo.full_name);
+    terminal.print(repo.description);
+    terminal.print("language: " + repo.language);
+    terminal.print("owner: " + repo.owner.login);
+    terminal.print("missing field: " + (json.get(repo, "no_such_field") ?? "n/a"));
+}

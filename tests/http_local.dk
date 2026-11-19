@@ -1,0 +1,40 @@
+// Run with `make test-http` (starts tests/http_server.py first).
+variable base = "http://127.0.0.1:8765";
+
+variable res = http.get(base + "/json");
+assert(res != null, "GET should succeed: " + http.lastError());
+assert(res.status == 200, "status 200");
+assert(res.ok, "ok flag");
+assert(http.header(res, "Content-Type") == "application/json", "header lookup is case-insensitive");
+variable data = json.parse(res.body);
+assert(data.name == "dk", "json body");
+assert(data.items.length == 3, "json array");
+
+variable missing = http.get(base + "/nope");
+assert(missing != null, "404 is still a response");
+assert(missing.status == 404, "status 404");
+assert(!missing.ok, "ok is false for 404");
+
+variable posted = http.post(base + "/echo", "hello", ["X-Test: yes", "Content-Type: text/plain"]);
+variable echo = json.parse(posted.body);
+assert(echo.method == "POST", "method echoed");
+assert(echo.body == "hello", "body echoed");
+assert(echo.xtest == "yes", "request header echoed");
+
+variable put = http.request("PUT", base + "/echo", json.stringify([1, 2]));
+assert(json.parse(put.body).method == "PUT", "custom method");
+assert(json.parse(put.body).body == "[1,2]", "custom method body");
+
+variable redirected = http.get(base + "/redirect");
+assert(redirected.status == 200, "redirect followed");
+assert(redirected.url == base + "/json", "final url reported");
+
+variable query = http.get(base + "/query?q=" + http.encode("a b"));
+assert(json.parse(query.body).q == "a b", "query string round trip");
+
+http.timeout(1);
+variable slow = http.get(base + "/slow");
+assert(slow == null, "slow request should time out");
+assert(http.lastError().length > 0, "timeout explained");
+
+terminal.print("http local ok");

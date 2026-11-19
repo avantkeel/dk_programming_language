@@ -1,0 +1,51 @@
+// parse: scalars, nesting, unicode, numbers
+variable doc = json.parse("{\"name\": \"dk\", \"tags\": [1, 2.5, true, null], \"nested\": {\"ok\": false}, \"emoji\": \"\\u00e9\\ud83d\\ude00\"}");
+assert(doc != null, "parse failed");
+assert(doc.name == "dk", "string field");
+assert(doc.tags.length == 4, "array length");
+assert(doc.tags[0] == 1, "int element");
+assert(doc.tags[1] == 2.5, "float element");
+assert(doc.tags[2] == true, "bool element");
+assert(doc.tags[3] == null, "null element");
+assert(doc.nested.ok == false, "nested object");
+assert(doc.emoji.length == 6, "utf-8 encoding of escapes");
+
+// whole numbers stay ints, fractions/exponents become floats
+assert(json.parse("42") == 42, "int");
+variable big = json.parse("1e3");
+assert(big == 1000.0, "exponent");
+
+// safe lookup helpers
+assert(json.has(doc, "name"), "has");
+assert(!json.has(doc, "missing"), "has missing");
+assert(json.get(doc, "missing") == null, "get missing is null");
+assert(json.get(doc.tags, 1) == 2.5, "get list index");
+assert(json.get(doc.tags, 99) == null, "get out of range is null");
+assert(json.keys(doc).length == 4, "keys");
+
+// invalid input yields null + an error message, never a crash
+assert(json.parse("{\"a\": }") == null, "invalid json");
+assert(json.lastError().length > 0, "error message set");
+assert(json.parse("[1, 2") == null, "truncated");
+assert(json.parse("[1] x") == null, "trailing garbage");
+assert(json.parse("<html>") == null, "html is not json");
+assert(!json.valid("{'a': 1}"), "single quotes invalid");
+assert(json.valid("[]"), "empty list valid");
+
+// stringify round trip
+assert(json.stringify([1, 2, 3]) == "[1,2,3]", "stringify list");
+assert(json.stringify("a\"b\n") == "\"a\\\"b\\n\"", "stringify escapes");
+assert(json.stringify(null) == "null", "stringify null");
+assert(json.stringify(1.0) == "1.0", "float keeps a fractional part");
+variable again = json.parse(json.stringify(doc));
+assert(again == doc, "round trip");
+assert(json.stringify(json.parse("{\"a\":[1,{\"b\":2}]}")) == "{\"a\":[1,{\"b\":2}]}", "compact");
+assert(json.stringify([1], true) == "[\n  1\n]", "pretty");
+
+struct Point {
+    variable x: int;
+    variable y: int;
+}
+assert(json.stringify(Point { x: 1, y: 2 }) == "{\"x\":1,\"y\":2}", "struct to json");
+
+terminal.print("json ok");

@@ -2,6 +2,8 @@
 
 #include "parser.hpp"
 #include "stdlib_assert.hpp"
+#include "stdlib_http.hpp"
+#include "stdlib_json.hpp"
 #include "stdlib_random.hpp"
 
 #include <filesystem>
@@ -174,6 +176,8 @@ struct Runtime {
         install_terminal();
         install_random(*this);
         install_assert(*this);
+        install_json(*this);
+        install_http(*this);
     }
     Runtime(std::ostream& out, std::istream& in,
             std::map<std::filesystem::path, std::shared_ptr<Runtime>>& cache,
@@ -182,6 +186,8 @@ struct Runtime {
         install_terminal();
         install_random(*this);
         install_assert(*this);
+        install_json(*this);
+        install_http(*this);
     }
 
     void install_terminal();

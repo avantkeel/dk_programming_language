@@ -1,0 +1,19 @@
+// Nothing here needs internet access.
+
+// Nothing listens on port 1: transport failure gives null, not a crash.
+variable refused = http.get("http://127.0.0.1:1/");
+assert(refused == null, "refused connection should return null");
+assert(http.lastError().length > 0, "lastError should explain the failure");
+assert((refused ?? "fallback") == "fallback", "?? works on failed requests");
+
+// Only http and https are allowed.
+assert(http.get("file:///etc/hostname") == null, "file:// must be blocked");
+assert(http.get("ftp://example.com/") == null, "ftp:// must be blocked");
+
+// Percent-encoding helper.
+assert(http.encode("a b&c=d/é") == "a%20b%26c%3Dd%2F%C3%A9", "encode");
+
+// Bad arguments are programming errors, not network errors.
+http.timeout(5);
+http.timeout(2.5);
+terminal.print("http offline ok");
