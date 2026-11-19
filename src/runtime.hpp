@@ -1,6 +1,8 @@
 #pragma once
 
 #include "parser.hpp"
+#include "stdlib_assert.hpp"
+#include "stdlib_random.hpp"
 
 #include <filesystem>
 #include <functional>
@@ -44,7 +46,11 @@ struct Value {
 };
 
 struct ListValue { ValueList elements; };
-struct Binding { Value value; std::optional<std::string> type; };
+struct Binding {
+    Value value;
+    std::optional<std::string> type;
+    bool is_builtin = false;
+};
 
 struct Environment : std::enable_shared_from_this<Environment> {
     std::shared_ptr<Environment> parent;
@@ -54,7 +60,13 @@ struct Environment : std::enable_shared_from_this<Environment> {
         : parent(std::move(enclosing)) {}
     void define(const std::string& name, Value value,
                 std::optional<std::string> type = {}) {
+        auto found = values.find(name);
+        if (found != values.end() && found->second.is_builtin)
+            throw LanguageError("Cannot reassign built-in '" + name + "'");
         values[name] = Binding{std::move(value), std::move(type)};
+    }
+    void define_builtin(const std::string& name, Value value) {
+        values[name] = Binding{std::move(value), {}, true};
     }
     Binding& find(const std::string& name) {
         auto found = values.find(name);
@@ -160,12 +172,16 @@ struct Runtime {
         : output(out), input(in), module_cache(&owned_modules),
           shared_loading(&loading_modules) {
         install_terminal();
+        install_random(*this);
+        install_assert(*this);
     }
     Runtime(std::ostream& out, std::istream& in,
             std::map<std::filesystem::path, std::shared_ptr<Runtime>>& cache,
             std::set<std::filesystem::path>& loading)
         : output(out), input(in), module_cache(&cache), shared_loading(&loading) {
         install_terminal();
+        install_random(*this);
+        install_assert(*this);
     }
 
     void install_terminal();

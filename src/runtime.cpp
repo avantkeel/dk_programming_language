@@ -29,7 +29,7 @@ void Runtime::install_terminal() {
             if (!(parser >> number) || (parser >> extra)) return Value{};
             return Value(number);
         }}));
-    globals->define("terminal", Value(terminal));
+    globals->define_builtin("terminal", Value(terminal));
 }
 
 void Runtime::run(const std::string& source, const std::filesystem::path& path) {
@@ -345,11 +345,13 @@ Value Runtime::evaluate_binary(const BinaryExpr& expression) {
 Value Runtime::evaluate_assignment(const AssignmentExpr& expression) {
     const auto& target = expression.target->node;
     if (const auto* variable = std::get_if<VariableExpr>(&target)) {
+        auto& binding = environment->find(variable->name);
+        if (binding.is_builtin)
+            throw LanguageError("Cannot reassign built-in '" + variable->name + "'");
         Value current;
-        if (expression.op != "=") current = environment->find(variable->name).value;
+        if (expression.op != "=") current = binding.value;
         Value value = evaluate(expression.value);
         value = apply_compound(current, value, expression.op);
-        auto& binding = environment->find(variable->name);
         check_type(value, binding.type, "variable '" + variable->name + "'");
         binding.value = value;
         return value;

@@ -37,6 +37,20 @@ finishes. Input is read from standard input.
 Statements end with semicolons, except block statements. Type mismatches,
 lexical errors, syntax errors, and runtime errors produce a nonzero exit status.
 
+## Random
+
+The built-in `random` library provides `seed(int)`, inclusive `int(min, max)`,
+`float()` in `[0.0, 1.0)`, `bool()`, `choice(list)`, and `shuffle(list)` (which
+returns a new list). For example:
+
+```text
+random.seed(42);
+terminal.print(random.int(1, 6));
+```
+
+The built-in `assert(condition, message?)` stops execution with an error when
+the condition is false.
+
 ## Modules
 
 Module paths are resolved relative to the importing file. Select names to

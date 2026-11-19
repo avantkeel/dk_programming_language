@@ -1,0 +1,45 @@
+function contains(values: [int], target: int) -> bool {
+    for value in values {
+        if value == target {
+            return true;
+        }
+    }
+    return false;
+}
+
+random.seed(42);
+variable first0: int = random.int(-100, 100);
+variable first1: int = random.int(-100, 100);
+variable first2: float = random.float();
+variable first3: bool = random.bool();
+random.seed(42);
+assert(first0 == random.int(-100, 100));
+assert(first1 == random.int(-100, 100));
+assert(first2 == random.float());
+assert(first3 == random.bool());
+
+for i in 0..500 {
+    variable value: int = random.int(-3, 5);
+    assert(value >= -3 && value <= 5, "random.int out of range");
+    assert(random.int(7, 7) == 7);
+}
+
+variable values: [int] = [1, 2, 3, 4];
+for i in 0..20 {
+    assert(contains(values, random.choice(values)));
+}
+
+variable shuffled: [int] = random.shuffle(values);
+assert(shuffled.length == values.length);
+assert(contains(shuffled, 1));
+assert(contains(shuffled, 2));
+assert(contains(shuffled, 3));
+assert(contains(shuffled, 4));
+assert(values[0] == 1 && values[1] == 2 && values[2] == 3 && values[3] == 4);
+
+for i in 0..500 {
+    variable value: float = random.float();
+    assert(value >= 0.0 && value < 1.0);
+}
+
+terminal.print("random OK");
