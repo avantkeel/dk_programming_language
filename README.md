@@ -87,9 +87,14 @@ exported declarations can be imported.
 ## HTTP
 
 `http` fetches web APIs over HTTP and HTTPS (redirects are followed, only
-`http://` and `https://` URLs are allowed):
+`http://` and `https://` URLs are allowed). Unlike `terminal`, `random`, `json`
+and `assert`, it is **not global**: each file must import it before using it,
+and the import must run before the first use. The `std:` prefix is reserved for
+standard libraries, so it never refers to a `.dk` file.
 
 ```text
+import { http } from "std:http";
+
 http.timeout(15);   // seconds, default 30
 
 variable res = http.get("https://api.github.com/repos/torvalds/linux",
@@ -118,6 +123,11 @@ and `headers`. A 404 or 500 is still a normal response. If the request cannot
 complete at all (DNS failure, refused connection, timeout, TLS error), the
 function returns `null`, so `http.get(url) ?? fallback` works. Bad arguments
 stop the program with an error. Responses over 64 MB are rejected.
+
+Imports are per file: a module that uses `http` must import it itself, even if
+the program that imports the module has already done so. Using `http` without
+importing it is an error (`Undefined name 'http'`), as is importing it twice or
+importing any name other than `http` from `std:http`.
 
 For HTTPS certificate problems, set the `DK_CA_BUNDLE` environment variable to
 a CA bundle file (`CURL_CA_BUNDLE` and `SSL_CERT_FILE` are also honoured).

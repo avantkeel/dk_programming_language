@@ -1,0 +1,5 @@
+// Must fail: importing http here does not leak into other modules.
+import { http } from "std:http";
+import { probe } from "modules/uses_http";
+terminal.print(http.encode("ok"));
+terminal.print(probe());

@@ -558,7 +558,27 @@ Value Runtime::create_struct(const StructLiteralExpr& expression) {
     return Value(value);
 }
 
+// Standard libraries that must be imported before use. They are looked up by a
+// reserved "std:" path prefix so they can never be confused with a .dk file.
+void Runtime::import_stdlib(const ImportDecl& declaration) {
+    const std::string library = declaration.path.substr(4);
+    if (library != "http")
+        throw LanguageError("Unknown standard library '" + declaration.path + "'");
+    for (const auto& name : declaration.names) {
+        if (name != "http")
+            throw LanguageError("Module '" + declaration.path +
+                                "' does not export '" + name + "'");
+        if (globals->values.count(name) || type_exists(name))
+            throw LanguageError("Imported name '" + name + "' is already defined");
+        install_http(*this);
+    }
+}
+
 void Runtime::import_module(const ImportDecl& declaration) {
+    if (declaration.path.rfind("std:", 0) == 0) {
+        import_stdlib(declaration);
+        return;
+    }
     std::filesystem::path module_path(declaration.path);
     if (module_path.extension() != ".dk") module_path += ".dk";
     if (module_path.is_relative()) {

@@ -37,6 +37,12 @@ test: $(TARGET)
 	! ./$(TARGET) tests/builtin_readonly.dk
 	./$(TARGET) tests/json.dk
 	./$(TARGET) tests/http_offline.dk
+	./$(TARGET) tests/http_not_imported.dk 2>&1 | grep -q "Undefined name 'http'"
+	./$(TARGET) tests/http_before_import.dk 2>&1 | grep -q "Undefined name 'http'"
+	./$(TARGET) tests/http_bad_import.dk 2>&1 | grep -q "does not export 'get'"
+	./$(TARGET) tests/http_unknown_std.dk 2>&1 | grep -q "Unknown standard library"
+	./$(TARGET) tests/http_double_import.dk 2>&1 | grep -q "already defined"
+	./$(TARGET) tests/http_module_scope.dk 2>&1 | grep -q "Undefined name 'http'"
 
 # Starts a throwaway HTTP server on 127.0.0.1:8765 (needs python3), runs the
 # HTTP tests against it, then stops it.

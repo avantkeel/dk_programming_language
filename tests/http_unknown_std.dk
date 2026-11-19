@@ -1,0 +1,2 @@
+// Must fail: there is no such standard library.
+import { ftp } from "std:ftp";

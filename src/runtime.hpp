@@ -74,13 +74,15 @@ struct Environment : std::enable_shared_from_this<Environment> {
         auto found = values.find(name);
         if (found != values.end()) return found->second;
         if (parent) return parent->find(name);
-        throw LanguageError("Undefined name '" + name + "'");
+        throw LanguageError("Undefined name '" + name + "'" +
+                            (name == "http" ? " (import it first: import { http } from \"std:http\";)" : ""));
     }
     const Binding& find(const std::string& name) const {
         auto found = values.find(name);
         if (found != values.end()) return found->second;
         if (parent) return parent->find(name);
-        throw LanguageError("Undefined name '" + name + "'");
+        throw LanguageError("Undefined name '" + name + "'" +
+                            (name == "http" ? " (import it first: import { http } from \"std:http\";)" : ""));
     }
 };
 
@@ -177,7 +179,6 @@ struct Runtime {
         install_random(*this);
         install_assert(*this);
         install_json(*this);
-        install_http(*this);
     }
     Runtime(std::ostream& out, std::istream& in,
             std::map<std::filesystem::path, std::shared_ptr<Runtime>>& cache,
@@ -187,7 +188,6 @@ struct Runtime {
         install_random(*this);
         install_assert(*this);
         install_json(*this);
-        install_http(*this);
     }
 
     void install_terminal();
@@ -215,6 +215,7 @@ struct Runtime {
     Value get_index(const IndexExpr& expression);
     Value create_struct(const StructLiteralExpr& expression);
     void import_module(const ImportDecl& declaration);
+    void import_stdlib(const ImportDecl& declaration);
     void initialize_fields(const std::shared_ptr<ClassInstance>& instance,
                            const std::shared_ptr<ClassValue>& class_value);
     Value evaluate_field_initializer(const std::shared_ptr<ClassInstance>& instance,

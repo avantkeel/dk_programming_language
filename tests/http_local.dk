@@ -1,4 +1,5 @@
 // Run with `make test-http` (starts tests/http_server.py first).
+import { http } from "std:http";
 variable base = "http://127.0.0.1:8765";
 
 variable res = http.get(base + "/json");

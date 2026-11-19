@@ -1,4 +1,5 @@
 // Nothing here needs internet access.
+import { http } from "std:http";
 
 // Nothing listens on port 1: transport failure gives null, not a crash.
 variable refused = http.get("http://127.0.0.1:1/");

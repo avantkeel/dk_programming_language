@@ -1,0 +1,2 @@
+// Must fail: the http library exports only `http`.
+import { get } from "std:http";
