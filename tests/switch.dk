@@ -1,0 +1,22 @@
+variable value = 2;
+
+switch value {
+    case 1 {
+        assert(false, "wrong switch case");
+    }
+    case 2 {
+        terminal.print("two");
+    }
+    default {
+        assert(false, "wrong switch default");
+    }
+}
+
+switch 99 {
+    case 1 {
+        assert(false, "wrong unmatched case");
+    }
+    default {
+        terminal.print("other");
+    }
+}

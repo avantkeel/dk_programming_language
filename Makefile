@@ -34,6 +34,7 @@ test: $(TARGET)
 	./$(TARGET) tests/random.dk
 	! ./$(TARGET) tests/assert_fail.dk
 	./$(TARGET) tests/random_module.dk
+	./$(TARGET) tests/switch.dk
 	! ./$(TARGET) tests/builtin_readonly.dk
 	./$(TARGET) tests/json.dk
 	./$(TARGET) tests/http_offline.dk

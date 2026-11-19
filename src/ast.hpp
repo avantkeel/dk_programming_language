@@ -58,6 +58,8 @@ struct ClassDecl {
 struct ExportStmt { StmtPtr declaration; };
 struct BlockStmt { std::vector<StmtPtr> statements; };
 struct IfStmt { ExprPtr condition; StmtPtr then_branch; StmtPtr else_branch; };
+struct SwitchCase { ExprPtr value; std::vector<StmtPtr> body; };
+struct SwitchStmt { ExprPtr value; std::vector<SwitchCase> cases; std::optional<std::vector<StmtPtr>> default_body; };
 struct WhileStmt { ExprPtr condition; StmtPtr body; };
 struct ForStmt { std::string name; ExprPtr iterable; StmtPtr body; };
 struct ReturnStmt { ExprPtr value; };
@@ -67,7 +69,7 @@ struct ExprStmt { ExprPtr expression; };
 struct Stmt {
     using Node = std::variant<VariableDecl, TypeAliasDecl, ImportDecl, StructDecl,
                               EnumDecl, std::shared_ptr<FunctionDecl>, ClassDecl,
-                              ExportStmt, BlockStmt, IfStmt, WhileStmt, ForStmt,
+                              ExportStmt, BlockStmt, IfStmt, SwitchStmt, WhileStmt, ForStmt,
                               ReturnStmt, BreakStmt, ExprStmt>;
     Node node;
     template <typename T> explicit Stmt(T value) : node(std::move(value)) {}

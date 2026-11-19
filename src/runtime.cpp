@@ -84,6 +84,8 @@ void Runtime::execute(const StmtPtr& statement) {
         } else if constexpr (std::is_same_v<T, IfStmt>) {
             if (require_boolean(evaluate(node.condition))) execute(node.then_branch);
             else if (node.else_branch) execute(node.else_branch);
+        } else if constexpr (std::is_same_v<T, SwitchStmt>) {
+            execute_switch(node);
         } else if constexpr (std::is_same_v<T, WhileStmt>) {
             execute_while(node);
         } else if constexpr (std::is_same_v<T, ForStmt>) {
@@ -184,6 +186,21 @@ void Runtime::register_class(const ClassDecl& declaration) {
     }
     classes[declaration.name] = value;
     globals->define(declaration.name, Value(value));
+}
+
+void Runtime::execute_switch(const SwitchStmt& statement) {
+    const Value value = evaluate(statement.value);
+    for (const auto& switch_case : statement.cases) {
+        if (values_equal(value, evaluate(switch_case.value))) {
+            execute_block(switch_case.body,
+                          std::make_shared<Environment>(environment));
+            return;
+        }
+    }
+    if (statement.default_body) {
+        execute_block(*statement.default_body,
+                      std::make_shared<Environment>(environment));
+    }
 }
 
 void Runtime::execute_while(const WhileStmt& statement) {

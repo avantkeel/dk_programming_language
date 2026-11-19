@@ -68,6 +68,7 @@ private:
                 std::holds_alternative<ExportStmt>(inner->node) ||
                 std::holds_alternative<BlockStmt>(inner->node) ||
                 std::holds_alternative<IfStmt>(inner->node) ||
+                std::holds_alternative<SwitchStmt>(inner->node) ||
                 std::holds_alternative<WhileStmt>(inner->node) ||
                 std::holds_alternative<ForStmt>(inner->node) ||
                 std::holds_alternative<ReturnStmt>(inner->node) ||
@@ -215,6 +216,7 @@ private:
     StmtPtr statement() {
         if (match("{")) return stmt(BlockStmt{block_contents()});
         if (match("if")) return if_statement();
+        if (match("switch")) return switch_statement();
         if (match("while")) return while_statement();
         if (match("for")) return for_statement();
         if (match("return")) {
@@ -248,6 +250,28 @@ private:
             otherwise = match("if") ? if_statement() : statement();
         }
         return stmt(IfStmt{condition, then_branch, otherwise});
+    }
+    StmtPtr switch_statement() {
+        auto value = expression();
+        consume("{", "Expected '{' after switch value");
+
+        std::vector<SwitchCase> cases;
+        std::optional<std::vector<StmtPtr>> default_body;
+        while (!check("}") && !check("EOF")) {
+            if (match("case")) {
+                auto case_value = expression();
+                consume("{", "Expected '{' after case value");
+                cases.push_back(SwitchCase{case_value, block_contents()});
+            } else if (match("default")) {
+                if (default_body) fail(previous(), "A switch can have only one default case");
+                consume("{", "Expected '{' after default");
+                default_body = block_contents();
+            } else {
+                fail(peek(), "Expected 'case' or 'default' inside switch");
+            }
+        }
+        consume("}", "Expected '}' after switch cases");
+        return stmt(SwitchStmt{value, std::move(cases), std::move(default_body)});
     }
     StmtPtr while_statement() {
         auto condition = expression();

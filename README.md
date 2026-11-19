@@ -47,12 +47,29 @@ finishes. Input is read from standard input.
 - Selective imports from `.dk` modules and explicit exported declarations
 - Structs, enums, classes, constructors, inheritance, `this`, `super`, and
   dynamic method dispatch
-- `if` / `else if` / `else`, `while`, `for value in list`, and integer ranges
+- `if` / `else if` / `else`, `switch` / `case` / `default`, `while`,
+  `for value in list`, and integer ranges
   written as `start..end` (the end is exclusive)
 - `terminal.print`, `terminal.read`, and `terminal.readInt`
 
 Statements end with semicolons, except block statements. Type mismatches,
 lexical errors, syntax errors, and runtime errors produce a nonzero exit status.
+
+Switch statements match one value and execute only the matching case:
+
+```text
+switch value {
+    case 1 {
+        terminal.print("one");
+    }
+    case 2 {
+        terminal.print("two");
+    }
+    default {
+        terminal.print("other");
+    }
+}
+```
 
 ## Random
 

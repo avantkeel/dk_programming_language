@@ -201,6 +201,7 @@ struct Runtime {
     void register_struct(const StructDecl& declaration);
     void register_enum(const EnumDecl& declaration);
     void register_class(const ClassDecl& declaration);
+    void execute_switch(const SwitchStmt& statement);
     void execute_while(const WhileStmt& statement);
     void execute_for(const ForStmt& statement);
     Value evaluate(const ExprPtr& expression);

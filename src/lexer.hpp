@@ -77,10 +77,10 @@ private:
         }
         std::string value = source_.substr(start, position_ - start);
         static const std::set<std::string> keywords{
-            "break", "class", "constructor", "else", "enum", "extends",
+            "break", "case", "class", "constructor", "default", "else", "enum", "extends",
             "export", "false", "for", "from", "function", "if", "import",
             "in", "new", "null", "override", "return", "struct", "super",
-            "this", "true", "type", "variable", "while"};
+            "switch", "this", "true", "type", "variable", "while"};
         return {keywords.count(value) ? value : "IDENTIFIER", value, line, column};
     }
 
