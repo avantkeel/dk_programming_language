@@ -18,7 +18,7 @@ CURL_CFLAGS ?= $(shell pkg-config --cflags libcurl 2>/dev/null || curl-config --
 CURL_LIBS ?= $(shell pkg-config --libs libcurl 2>/dev/null || curl-config --libs 2>/dev/null || echo -lcurl)
 endif
 
-.PHONY: all test test-http clean
+.PHONY: all test test-http bench clean
 
 all: $(TARGET)
 
@@ -44,6 +44,11 @@ test: $(TARGET)
 	./$(TARGET) tests/http_unknown_std.dk 2>&1 | grep -q "Unknown standard library"
 	./$(TARGET) tests/http_double_import.dk 2>&1 | grep -q "already defined"
 	./$(TARGET) tests/http_module_scope.dk 2>&1 | grep -q "Undefined name 'http'"
+
+# Runs each benchmark once and reports wall-clock time.
+bench: $(TARGET)
+	time ./$(TARGET) bench/loop.dk
+	time ./$(TARGET) bench/fib.dk
 
 # Starts a throwaway HTTP server on 127.0.0.1:8765 (needs python3), runs the
 # HTTP tests against it, then stops it.
