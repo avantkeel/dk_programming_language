@@ -37,6 +37,16 @@ test: $(TARGET)
 	./$(TARGET) tests/switch.dk
 	! ./$(TARGET) tests/builtin_readonly.dk
 	./$(TARGET) tests/json.dk
+	./$(TARGET) tests/map.dk
+	./$(TARGET) tests/type_alias_container.dk
+	./$(TARGET) tests/type_alias_circular.dk 2>&1 | grep -q "Circular type alias"
+	./$(TARGET) tests/map_bad_key.dk 2>&1 | grep -q "Map keys must be"
+	./$(TARGET) tests/map_bad_key_type.dk 2>&1 | grep -q "Map key type must be"
+	./$(TARGET) tests/map_type_error.dk 2>&1 | grep -q "must be '\[string: int\]'"
+	./$(TARGET) tests/map_key_type_error.dk 2>&1 | grep -q "must be '\[string: int\]'"
+	./$(TARGET) tests/map_missing_compound.dk 2>&1 | grep -q "missing map key"
+	./$(TARGET) tests/map_for.dk 2>&1 | grep -q "cannot iterate a map"
+	./$(TARGET) tests/map_mixed_literal.dk 2>&1 | grep -q "cannot contain"
 	./$(TARGET) tests/http_offline.dk
 	./$(TARGET) tests/http_not_imported.dk 2>&1 | grep -q "Undefined name 'http'"
 	./$(TARGET) tests/http_before_import.dk 2>&1 | grep -q "Undefined name 'http'"

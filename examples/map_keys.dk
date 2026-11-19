@@ -1,0 +1,44 @@
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+function main() {
+    // String keys map names to values.
+    variable ages: [string: int] = [
+        "ana": 31,
+        "luis": 28
+    ];
+    ages["marta"] = 40;
+    terminal.print("Ana: " + ages["ana"]);
+
+    // Integer keys can be used like an indexed map.
+    variable scores: [int: string] = [
+        10: "bronze",
+        20: "silver",
+        30: "gold"
+    ];
+    terminal.print("Score 20: " + scores[20]);
+
+    // Boolean keys.
+    variable labels: [bool: string] = [
+        true: "enabled",
+        false: "disabled"
+    ];
+    terminal.print("Feature: " + labels[true]);
+
+    // Enum keys.
+    variable colorNames: [Color: string] = [
+        Color.Red: "red",
+        Color.Green: "green",
+        Color.Blue: "blue"
+    ];
+    terminal.print("Green: " + colorNames[Color.Green]);
+
+    // Missing keys read as null, and keys() lists the map's keys.
+    terminal.print("Missing: " + (ages["zoe"] ?? 0));
+    for name in ages.keys() {
+        terminal.print(name + " is " + ages[name] + " years old");
+    }
+}

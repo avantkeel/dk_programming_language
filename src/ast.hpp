@@ -5,6 +5,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -26,11 +27,13 @@ struct IndexExpr { ExprPtr object; ExprPtr index; };
 struct NewExpr { std::string class_name; std::vector<ExprPtr> arguments; };
 struct StructLiteralExpr { std::string type_name; std::map<std::string, ExprPtr> fields; };
 struct RangeExpr { ExprPtr start; ExprPtr end; };
+struct MapExpr { std::vector<std::pair<ExprPtr, ExprPtr>> entries; };
 
 struct Expr {
     using Node = std::variant<LiteralExpr, VariableExpr, ListExpr, UnaryExpr,
                               BinaryExpr, AssignmentExpr, CallExpr, PropertyExpr,
-                              IndexExpr, NewExpr, StructLiteralExpr, RangeExpr>;
+                              IndexExpr, NewExpr, StructLiteralExpr, RangeExpr,
+                              MapExpr>;
     Node node;
     template <typename T> explicit Expr(T value) : node(std::move(value)) {}
 };

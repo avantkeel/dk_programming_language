@@ -1,0 +1,4 @@
+variable m = ["a": 1];
+for key in m {
+    terminal.print(key);
+}

@@ -281,6 +281,23 @@ void write_value(std::string& out, const Value& value, bool pretty, int level) {
         }
         newline(level);
         out += ']';
+    } else if (const auto* item = std::get_if<std::shared_ptr<MapValue>>(&value.data)) {
+        const auto& entries = (*item)->entries;
+        if (entries.empty()) { out += "{}"; return; }
+        out += '{';
+        bool first = true;
+        for (const auto& entry : entries) {
+            const auto* key = std::get_if<std::string>(&entry.first.data);
+            if (!key) throw LanguageError("json.stringify: map keys must be strings");
+            if (!first) out += ',';
+            first = false;
+            newline(level + 1);
+            write_string(out, *key);
+            out += pretty ? ": " : ":";
+            write_value(out, entry.second, pretty, level + 1);
+        }
+        newline(level);
+        out += '}';
     } else if (const auto* item = std::get_if<std::shared_ptr<StructValue>>(&value.data)) {
         const auto& fields = (*item)->fields;
         if (fields.empty()) { out += "{}"; return; }

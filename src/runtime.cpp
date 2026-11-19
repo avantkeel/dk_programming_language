@@ -5,6 +5,63 @@
 #include <iterator>
 
 namespace dk {
+namespace {
+// Splits a map type "[K: V]" at its top-level colon. Returns nothing for list
+// types "[T]" and for every other type. Colons inside nested brackets are skipped.
+std::optional<std::pair<std::string, std::string>> split_map_type(const std::string& type) {
+    if (type.size() < 2 || type.front() != '[' || type.back() != ']') return std::nullopt;
+    const auto trim = [](const std::string& text) {
+        const auto first = text.find_first_not_of(' ');
+        if (first == std::string::npos) return std::string{};
+        return text.substr(first, text.find_last_not_of(' ') - first + 1);
+    };
+    int depth = 0;
+    for (std::size_t i = 1; i + 1 < type.size(); ++i) {
+        if (type[i] == '[') ++depth;
+        else if (type[i] == ']') --depth;
+        else if (type[i] == ':' && depth == 0)
+            return std::make_pair(trim(type.substr(1, i - 1)),
+                                  trim(type.substr(i + 1, type.size() - i - 2)));
+    }
+    return std::nullopt;
+}
+
+// Order of key kinds inside a map; -1 means the value cannot be a key.
+int map_key_rank(const Value& value) {
+    if (std::holds_alternative<bool>(value.data)) return 0;
+    if (std::holds_alternative<std::int64_t>(value.data)) return 1;
+    if (std::holds_alternative<std::string>(value.data)) return 2;
+    if (std::holds_alternative<std::shared_ptr<EnumValue>>(value.data)) return 3;
+    return -1;
+}
+
+Value native_method(std::string name, std::size_t minimum, std::size_t maximum,
+                    std::function<Value(const std::vector<Value>&)> body) {
+    return Value(std::make_shared<NativeFunction>(
+        NativeFunction{std::move(name), minimum, maximum, std::move(body)}));
+}
+} // namespace
+
+bool MapKeyLess::operator()(const Value& left, const Value& right) const {
+    const int a = map_key_rank(left), b = map_key_rank(right);
+    if (a != b) return a < b;
+    if (a == 0) return std::get<bool>(left.data) < std::get<bool>(right.data);
+    if (a == 1) return std::get<std::int64_t>(left.data) < std::get<std::int64_t>(right.data);
+    if (a == 2) return std::get<std::string>(left.data) < std::get<std::string>(right.data);
+    if (a == 3) {
+        const auto& x = *std::get<std::shared_ptr<EnumValue>>(left.data);
+        const auto& y = *std::get<std::shared_ptr<EnumValue>>(right.data);
+        return x.type_name != y.type_name ? x.type_name < y.type_name : x.member < y.member;
+    }
+    return false;
+}
+
+void require_map_key(const Value& key) {
+    if (map_key_rank(key) < 0)
+        throw LanguageError("Map keys must be int, string, bool, or enum values, got " +
+                            value_type_name(key));
+}
+
 void Runtime::install_terminal() {
     auto terminal = std::make_shared<StructValue>();
     terminal->type_name = "terminal";
@@ -223,6 +280,8 @@ void Runtime::execute_for(const ForStmt& statement) {
         values = (*list)->elements;
     } else if (const auto* string = std::get_if<std::string>(&iterable.data)) {
         for (char c : *string) values.emplace_back(std::string(1, c));
+    } else if (std::holds_alternative<std::shared_ptr<MapValue>>(iterable.data)) {
+        throw LanguageError("A for loop cannot iterate a map directly; use .keys() or .values()");
     } else {
         throw LanguageError("A for loop needs a range, list, or string");
     }
@@ -280,6 +339,15 @@ Value Runtime::evaluate(const ExprPtr& expression) {
             return Value(found->second->create(arguments));
         } else if constexpr (std::is_same_v<T, StructLiteralExpr>) {
             return create_struct(node);
+        } else if constexpr (std::is_same_v<T, MapExpr>) {
+            auto map = std::make_shared<MapValue>();
+            for (const auto& entry : node.entries) {
+                Value key = evaluate(entry.first);
+                require_map_key(key);
+                Value item = evaluate(entry.second);
+                map->entries[std::move(key)] = std::move(item);
+            }
+            return Value(map);
         } else {
             const Value start = evaluate(node.start);
             const Value end = evaluate(node.end);
@@ -384,6 +452,20 @@ Value Runtime::evaluate_assignment(const AssignmentExpr& expression) {
     if (const auto* index = std::get_if<IndexExpr>(&target)) {
         const Value owner = evaluate(index->object);
         const Value index_value = evaluate(index->index);
+        if (const auto* map = std::get_if<std::shared_ptr<MapValue>>(&owner.data)) {
+            require_map_key(index_value);
+            Value current;
+            if (expression.op != "=") {
+                auto found = (*map)->entries.find(index_value);
+                if (found == (*map)->entries.end())
+                    throw LanguageError("Cannot use '" + expression.op +
+                                        "' on missing map key " + display_value(index_value));
+                current = found->second;
+            }
+            Value value = apply_compound(current, evaluate(expression.value), expression.op);
+            (*map)->entries[index_value] = value;
+            return value;
+        }
         auto* list = std::get_if<std::shared_ptr<ListValue>>(&owner.data);
         const auto* number = std::get_if<std::int64_t>(&index_value.data);
         if (!list || !number) throw LanguageError("List assignment needs an integer index");
@@ -492,6 +574,34 @@ Value Runtime::get_property(const Value& owner, const std::string& name) {
     if (const auto* parent =
             std::get_if<std::shared_ptr<SuperReference>>(&owner.data))
         return (*parent)->get(name);
+    if (const auto* held = std::get_if<std::shared_ptr<MapValue>>(&owner.data)) {
+        const std::shared_ptr<MapValue> map = *held;
+        if (name == "length")
+            return Value(static_cast<std::int64_t>(map->entries.size()));
+        if (name == "has")
+            return native_method("map.has", 1, 1, [map](const std::vector<Value>& args) -> Value {
+                require_map_key(args[0]);
+                return Value(map->entries.count(args[0]) > 0);
+            });
+        if (name == "remove")
+            return native_method("map.remove", 1, 1, [map](const std::vector<Value>& args) -> Value {
+                require_map_key(args[0]);
+                return Value(map->entries.erase(args[0]) > 0);
+            });
+        if (name == "keys")
+            return native_method("map.keys", 0, 0, [map](const std::vector<Value>&) -> Value {
+                auto keys = std::make_shared<ListValue>();
+                for (const auto& entry : map->entries) keys->elements.push_back(entry.first);
+                return Value(keys);
+            });
+        if (name == "values")
+            return native_method("map.values", 0, 0, [map](const std::vector<Value>&) -> Value {
+                auto values = std::make_shared<ListValue>();
+                for (const auto& entry : map->entries) values->elements.push_back(entry.second);
+                return Value(values);
+            });
+        throw LanguageError("Map has no property '" + name + "'");
+    }
     if (const auto* list =
             std::get_if<std::shared_ptr<ListValue>>(&owner.data)) {
         if (name == "length")
@@ -530,6 +640,11 @@ void Runtime::set_property(const Value& owner, const std::string& name, Value va
 Value Runtime::get_index(const IndexExpr& expression) {
     const Value owner = evaluate(expression.object);
     const Value index = evaluate(expression.index);
+    if (const auto* map = std::get_if<std::shared_ptr<MapValue>>(&owner.data)) {
+        require_map_key(index);
+        auto found = (*map)->entries.find(index);
+        return found == (*map)->entries.end() ? Value{} : found->second;
+    }
     const auto* integer = std::get_if<std::int64_t>(&index.data);
     if (!integer) throw LanguageError("Indexing needs a list or string and an integer");
     if (const auto* list = std::get_if<std::shared_ptr<ListValue>>(&owner.data)) {
@@ -726,6 +841,15 @@ void Runtime::check_type(const Value& value, const std::optional<std::string>& t
 }
 
 bool Runtime::matches_type(const Value& value, const std::string& type) {
+    if (const auto parts = split_map_type(type)) {
+        const auto* map = std::get_if<std::shared_ptr<MapValue>>(&value.data);
+        if (!map) return false;
+        return std::all_of((*map)->entries.begin(), (*map)->entries.end(),
+                           [this, &parts](const auto& entry) {
+                               return matches_type(entry.first, parts->first) &&
+                                      matches_type(entry.second, parts->second);
+                           });
+    }
     if (type.size() >= 2 && type.front() == '[' && type.back() == ']') {
         const auto* list = std::get_if<std::shared_ptr<ListValue>>(&value.data);
         if (!list) return false;
@@ -749,9 +873,18 @@ bool Runtime::matches_type(const Value& value, const std::string& type) {
     return false;
 }
 
-std::string Runtime::resolve_type(const std::string& type) {
+std::string Runtime::resolve_type(const std::string& type, int depth) {
+    if (depth > 32) throw LanguageError("Circular type alias involving '" + type + "'");
+    if (const auto parts = split_map_type(type)) {
+        const auto key = resolve_type(parts->first, depth + 1);
+        if (key == "float" || key == "void" || key.front() == '[' ||
+            struct_types.count(key) || classes.count(key))
+            throw LanguageError("Map key type must be int, string, bool, or an enum, got '" +
+                                key + "'");
+        return "[" + key + ": " + resolve_type(parts->second, depth + 1) + "]";
+    }
     if (type.size() >= 2 && type.front() == '[' && type.back() == ']')
-        return "[" + resolve_type(type.substr(1, type.size() - 2)) + "]";
+        return "[" + resolve_type(type.substr(1, type.size() - 2), depth + 1) + "]";
     std::set<std::string> visited;
     std::string current = type;
     while (type_aliases.count(current)) {
@@ -759,6 +892,9 @@ std::string Runtime::resolve_type(const std::string& type) {
             throw LanguageError("Circular type alias involving '" + current + "'");
         current = type_aliases.at(current);
     }
+    // An alias can name a container type such as [UserId]; resolve what is inside it too.
+    if (current != type && !current.empty() && current.front() == '[')
+        return resolve_type(current, depth + 1);
     return current;
 }
 
@@ -769,6 +905,7 @@ Value Runtime::default_value(const std::optional<std::string>& type) {
     if (resolved == "float") return Value(0.0);
     if (resolved == "string") return Value(std::string{});
     if (resolved == "bool") return Value(false);
+    if (split_map_type(resolved)) return Value(std::make_shared<MapValue>());
     if (resolved.size() >= 2 && resolved.front() == '[' && resolved.back() == ']')
         return Value(std::make_shared<ListValue>());
     return Value{};
@@ -909,6 +1046,7 @@ std::string value_type_name(const Value& value) {
     if (std::holds_alternative<double>(value.data)) return "float";
     if (std::holds_alternative<std::string>(value.data)) return "string";
     if (std::holds_alternative<std::shared_ptr<ListValue>>(value.data)) return "list";
+    if (std::holds_alternative<std::shared_ptr<MapValue>>(value.data)) return "map";
     if (const auto* item = std::get_if<std::shared_ptr<ClassInstance>>(&value.data))
         return (*item)->class_value->name();
     if (const auto* item = std::get_if<std::shared_ptr<StructValue>>(&value.data))
@@ -939,6 +1077,17 @@ std::string display_value(const Value& value) {
         for (std::size_t i = 0; i < (*item)->elements.size(); ++i) {
             if (i) result += ", ";
             result += display_value((*item)->elements[i]);
+        }
+        return result + "]";
+    }
+    if (const auto* item = std::get_if<std::shared_ptr<MapValue>>(&value.data)) {
+        if ((*item)->entries.empty()) return "[:]";
+        std::string result = "[";
+        bool first = true;
+        for (const auto& entry : (*item)->entries) {
+            if (!first) result += ", ";
+            first = false;
+            result += display_value(entry.first) + ": " + display_value(entry.second);
         }
         return result + "]";
     }
@@ -974,6 +1123,15 @@ bool values_equal(const Value& left, const Value& right) {
         if ((*a)->elements.size() != b.size()) return false;
         for (std::size_t i = 0; i < b.size(); ++i)
             if (!values_equal((*a)->elements[i], b[i])) return false;
+        return true;
+    }
+    if (const auto* a = std::get_if<std::shared_ptr<MapValue>>(&left.data)) {
+        const auto& b = std::get<std::shared_ptr<MapValue>>(right.data)->entries;
+        if ((*a)->entries.size() != b.size()) return false;
+        for (const auto& entry : (*a)->entries) {
+            auto other = b.find(entry.first);
+            if (other == b.end() || !values_equal(entry.second, other->second)) return false;
+        }
         return true;
     }
     if (const auto* a = std::get_if<std::shared_ptr<StructValue>>(&left.data)) {

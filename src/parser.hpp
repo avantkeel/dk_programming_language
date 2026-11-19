@@ -207,6 +207,11 @@ private:
     std::string type_name() {
         if (match("[")) {
             const auto inner = type_name();
+            if (match(":")) {
+                const auto value = type_name();
+                consume("]", "Expected ']' after map value type");
+                return "[" + inner + ": " + value + "]";
+            }
             consume("]", "Expected ']' after list element type");
             return "[" + inner + "]";
         }
@@ -325,11 +330,29 @@ private:
             return value;
         }
         if (match("[")) {
-            std::vector<ExprPtr> elements;
-            if (!check("]")) {
-                do { elements.push_back(expression()); } while (match(","));
+            if (match(":")) {
+                consume("]", "Expected ']' after ':' in an empty map");
+                return expr(MapExpr{});
             }
-            consume("]", "Expected ']' after list");
+            std::vector<ExprPtr> elements;
+            std::vector<std::pair<ExprPtr, ExprPtr>> entries;
+            bool is_map = false;
+            if (!check("]")) {
+                do {
+                    auto item = expression();
+                    if (elements.empty() && entries.empty()) is_map = check(":");
+                    if (is_map) {
+                        consume(":", "Expected ':' after map key");
+                        entries.emplace_back(std::move(item), expression());
+                    } else {
+                        if (check(":"))
+                            fail(peek(), "A list cannot contain 'key: value' entries");
+                        elements.push_back(std::move(item));
+                    }
+                } while (match(","));
+            }
+            consume("]", is_map ? "Expected ']' after map" : "Expected ']' after list");
+            if (is_map) return expr(MapExpr{std::move(entries)});
             return expr(ListExpr{std::move(elements)});
         }
         fail(peek(), "Expected an expression");

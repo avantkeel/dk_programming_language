@@ -1,0 +1,96 @@
+// Map (dictionary) type: literals, access, methods, types, equality.
+enum Color { Red, Green }
+type Ages = [string: int];
+
+function bump(m: [string: int], name: string) {
+    m[name] += 1;
+}
+
+function build() -> [string: int] {
+    return ["a": 1];
+}
+
+function main() {
+    // literals and typed variables
+    variable ages: [string: int] = ["ana": 31, "luis": 28];
+    variable empty: [string: int] = [:];
+    variable untyped = [1: "one", 2: "two"];
+    variable declared: [string: int];
+    variable aliased: Ages = ["x": 1];
+    assert(ages.length == 2, "length");
+    assert(empty.length == 0, "empty length");
+    assert(declared.length == 0, "declared without initializer is empty");
+    assert(aliased["x"] == 1, "alias type");
+    assert(untyped[2] == "two", "int keys");
+
+    // get / set / missing key
+    assert(ages["ana"] == 31, "get");
+    assert(ages["zoe"] == null, "missing key is null");
+    assert((ages["zoe"] ?? 0) == 0, "?? default for missing key");
+    ages["marta"] = 40;
+    assert(ages["marta"] == 40, "set new key");
+    ages["ana"] = 32;
+    assert(ages["ana"] == 32, "overwrite");
+    ages["ana"] += 1;
+    assert(ages["ana"] == 33, "compound assignment");
+    assert(ages.length == 3, "length after set");
+
+    // methods
+    assert(ages.has("luis"), "has");
+    assert(!ages.has("nobody"), "has missing");
+    assert(ages.remove("luis"), "remove existing returns true");
+    assert(!ages.remove("luis"), "remove missing returns false");
+    assert(!ages.has("luis"), "removed");
+    assert(ages.keys().length == 2, "keys length");
+    assert(ages.keys()[0] == "ana", "keys are sorted");
+    assert(ages.keys()[1] == "marta", "keys are sorted 2");
+    assert(ages.values()[0] == 33, "values follow key order");
+
+    // iteration through keys()
+    variable total = 0;
+    for name in ages.keys() {
+        total += ages[name];
+    }
+    assert(total == 73, "iterate keys");
+
+    // bool and enum keys
+    variable flags: [bool: string] = [true: "yes", false: "no"];
+    assert(flags[true] == "yes", "bool key");
+    variable colors: [Color: int] = [Color.Red: 1, Color.Green: 2];
+    assert(colors[Color.Green] == 2, "enum key");
+    colors[Color.Red] += 10;
+    assert(colors[Color.Red] == 11, "enum key compound");
+
+    // nested maps and maps of lists
+    variable nested: [string: [string: int]] = ["outer": ["inner": 5]];
+    assert(nested["outer"]["inner"] == 5, "nested map");
+    nested["outer"]["inner"] = 6;
+    assert(nested["outer"]["inner"] == 6, "nested set");
+    variable lists: [string: [int]] = ["a": [1, 2], "b": []];
+    assert(lists["a"].length == 2, "map of lists");
+    assert(lists["b"].length == 0, "map of empty list");
+
+    // reference semantics
+    variable shared: [string: int] = ["n": 1];
+    bump(shared, "n");
+    assert(shared["n"] == 2, "function mutates the caller's map");
+    variable alias = shared;
+    alias["n"] = 9;
+    assert(shared["n"] == 9, "assignment shares the same map");
+    assert(build()["a"] == 1, "map as a return value");
+
+    // equality is deep and ignores insertion order
+    assert(["a": 1, "b": 2] == ["b": 2, "a": 1], "equal maps");
+    assert(["a": 1] != ["a": 2], "different values");
+    assert(["a": 1] != ["a": 1, "b": 2], "different sizes");
+    assert([:] == [:], "empty maps equal");
+    assert(["k": [1, 2]] == ["k": [1, 2]], "deep equality");
+
+    // printing and json
+    assert(("" + ["a": 1, "b": 2]) == "[a: 1, b: 2]", "display");
+    assert(("" + [:]) == "[:]", "display empty");
+    assert(json.stringify(["a": 1, "b": [true, null]]) == "{\"a\":1,\"b\":[true,null]}", "json map");
+    assert(json.stringify([:]) == "{}", "json empty map");
+
+    terminal.print("map ok");
+}

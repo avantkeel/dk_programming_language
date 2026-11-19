@@ -41,7 +41,8 @@ finishes. Input is read from standard input.
 
 ## Language features
 
-- `int`, `float`, `string`, `bool`, list types such as `[int]`, and type aliases
+- `int`, `float`, `string`, `bool`, list types such as `[int]`, map types such as
+  `[string: int]`, and type aliases
 - Variables, arithmetic, comparisons, assignment, `??`, and boolean operators
 - Functions with parameters, return types, and `return`
 - Selective imports from `.dk` modules and explicit exported declarations
@@ -70,6 +71,41 @@ switch value {
     }
 }
 ```
+
+## Maps
+
+A map is written like a list with `key: value` entries, and its type is
+`[KeyType: ValueType]`. The empty map is `[:]`.
+
+```text
+variable ages: [string: int] = ["ana": 31, "luis": 28];
+ages["marta"] = 40;
+ages["ana"] += 1;
+terminal.print(ages["ana"]);          // 32
+terminal.print(ages["zoe"] ?? 0);     // a missing key reads as null
+
+if ages.has("luis") {
+    ages.remove("luis");
+}
+for name in ages.keys() {
+    terminal.print(name + " is " + ages[name]);
+}
+```
+
+| Member | Description |
+|---|---|
+| `m[key]` | Value for the key, or `null` if it is missing |
+| `m[key] = value` | Sets or replaces an entry (`+=` and friends need an existing key) |
+| `m.has(key)` | Whether the key exists |
+| `m.remove(key)` | Removes the key; `true` if it existed |
+| `m.keys()` / `m.values()` | Lists of keys / values, ordered by key |
+| `m.length` | Number of entries |
+
+Keys can be `int`, `string`, `bool` or enum values. Keys are kept sorted, so
+iteration order is deterministic. Maps are shared like lists: a function that
+receives a map changes the caller's map. A map cannot be used directly in a
+`for` loop; loop over `m.keys()` or `m.values()`. `json.stringify` writes a map
+with string keys as a JSON object.
 
 ## Random
 

@@ -1,0 +1,21 @@
+// Aliases used inside list and map types must resolve.
+type UserId = int;
+type Ids = [UserId];
+type Names = [UserId: string];
+type Registry = [string: Names];
+
+function first(ids: Ids) -> UserId {
+    return ids[0];
+}
+
+function main() {
+    variable ids: Ids = [1, 2];
+    variable names: Names = [1: "a"];
+    variable inline: [UserId: [UserId]] = [7: [8, 9]];
+    variable registry: Registry = ["team": names];
+    assert(first(ids) == 1, "list alias");
+    assert(names[1] == "a", "map alias");
+    assert(inline[7][1] == 9, "inline alias in map type");
+    assert(registry["team"][1] == "a", "alias of alias");
+    terminal.print("alias containers ok");
+}

@@ -18,6 +18,7 @@
 namespace dk {
 struct Value;
 struct ListValue;
+struct MapValue;
 struct StructValue;
 struct EnumTypeValue;
 struct EnumValue;
@@ -41,13 +42,22 @@ struct Value {
                               std::shared_ptr<NativeFunction>,
                               std::shared_ptr<ClassValue>,
                               std::shared_ptr<EnumTypeValue>,
-                              std::shared_ptr<SuperReference>, RangeValue>;
+                              std::shared_ptr<SuperReference>, RangeValue,
+                              std::shared_ptr<MapValue>>;
     Data data;
     Value() = default;
     template <typename T> explicit Value(T item) : data(std::move(item)) {}
 };
 
 struct ListValue { ValueList elements; };
+
+// Map keys may be bool, int, string or enum values. Keys are ordered by kind
+// first (bool < int < string < enum) and then by value, so iteration order is
+// deterministic.
+struct MapKeyLess { bool operator()(const Value& left, const Value& right) const; };
+struct MapValue { std::map<Value, Value, MapKeyLess> entries; };
+// Throws LanguageError unless the value can be used as a map key.
+void require_map_key(const Value& key);
 struct Binding {
     Value value;
     std::optional<std::string> type;
@@ -225,7 +235,7 @@ struct Runtime {
     void check_type(const Value& value, const std::optional<std::string>& type,
                     const std::string& description);
     bool matches_type(const Value& value, const std::string& type);
-    std::string resolve_type(const std::string& type);
+    std::string resolve_type(const std::string& type, int depth = 0);
     Value default_value(const std::optional<std::string>& type);
     bool type_exists(const std::string& name) const;
     void ensure_type_available(const std::string& name) const;
