@@ -1,7 +1,7 @@
 #pragma once
 
-#include "lexer.hpp"
-#include "ast.hpp"
+#include "dk/lexer.hpp"
+#include "dk/ast.hpp"
 
 #include <algorithm>
 #include <cstdlib>

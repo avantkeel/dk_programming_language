@@ -1,9 +1,9 @@
 CXX := g++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
 TARGET := bin/dk.exe
-SOURCES := src/main.cpp src/interpreter.cpp src/runtime.cpp src/stdlib_random.cpp \
-           src/stdlib_assert.cpp src/stdlib_json.cpp src/stdlib_http.cpp
-HEADERS := $(wildcard src/*.hpp) include/dk/interpreter.hpp
+SOURCES := src/main.cpp src/interpreter.cpp src/runtime.cpp stdlib/stdlib_random.cpp \
+           stdlib/stdlib_assert.cpp stdlib/stdlib_json.cpp stdlib/stdlib_http.cpp
+HEADERS := $(wildcard include/dk/*.hpp)
 
 # libcurl (needed by the http library).
 #   * Linux/macOS/MSYS2: found automatically through pkg-config or curl-config.
