@@ -184,7 +184,8 @@ private:
             do {
                 Parameter parameter;
                 parameter.name = consume("IDENTIFIER", "Expected a parameter name").value;
-                if (match(":")) parameter.type = type_name();
+                consume(":", "Function parameters must declare a type");
+                parameter.type = type_name();
                 result.push_back(std::move(parameter));
             } while (match(","));
         }
@@ -195,11 +196,9 @@ private:
     StmtPtr variable_declaration(bool require_semicolon) {
         VariableDecl declaration;
         declaration.name = consume("IDENTIFIER", "Expected a variable name").value;
-        if (match(":")) declaration.type = type_name();
+        consume(":", "Variables must declare a type");
+        declaration.type = type_name();
         if (match("=")) declaration.initializer = expression();
-        if (!declaration.type && !declaration.initializer) {
-            fail(previous(), "A variable needs a type or an initial value");
-        }
         if (require_semicolon) consume(";", "Expected ';' after variable declaration");
         return stmt(std::move(declaration));
     }
@@ -284,9 +283,11 @@ private:
     }
     StmtPtr for_statement() {
         auto name = consume("IDENTIFIER", "Expected a loop variable").value;
+        consume(":", "Loop variables must declare a type");
+        auto type = type_name();
         consume("in", "Expected 'in' after loop variable");
         auto iterable = expression();
-        return stmt(ForStmt{name, iterable, statement()});
+        return stmt(ForStmt{name, type, iterable, statement()});
     }
 
     ExprPtr expression(int minimum = 1) {

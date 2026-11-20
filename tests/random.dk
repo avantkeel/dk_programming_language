@@ -1,5 +1,5 @@
 function contains(values: [int], target: int) -> bool {
-    for value in values {
+    for value: int in values {
         if value == target {
             return true;
         }
@@ -18,14 +18,14 @@ assert(first1 == random.int(-100, 100));
 assert(first2 == random.float());
 assert(first3 == random.bool());
 
-for i in 0..500 {
+for i: int in 0..500 {
     variable value: int = random.int(-3, 5);
     assert(value >= -3 && value <= 5, "random.int out of range");
     assert(random.int(7, 7) == 7);
 }
 
 variable values: [int] = [1, 2, 3, 4];
-for i in 0..20 {
+for i: int in 0..20 {
     assert(contains(values, random.choice(values)));
 }
 
@@ -37,7 +37,7 @@ assert(contains(shuffled, 3));
 assert(contains(shuffled, 4));
 assert(values[0] == 1 && values[1] == 2 && values[2] == 3 && values[3] == 4);
 
-for i in 0..500 {
+for i: int in 0..500 {
     variable value: float = random.float();
     assert(value >= 0.0 && value < 1.0);
 }

@@ -10,7 +10,7 @@ assert(second == roll(), "module sequence did not repeat");
 random.seed(123);
 variable initial: int = roll();
 variable found_different: bool = false;
-for i in 0..20 {
+for i: int in 0..20 {
     variable value: int = roll();
     if value != initial {
         found_different = true;

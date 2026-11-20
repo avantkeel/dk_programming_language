@@ -234,6 +234,7 @@ struct Runtime {
                                      const VariableDecl& field);
     void check_type(const Value& value, const std::optional<std::string>& type,
                     const std::string& description);
+    void validate_type(const std::string& type);
     bool matches_type(const Value& value, const std::string& type);
     std::string resolve_type(const std::string& type, int depth = 0);
     Value default_value(const std::optional<std::string>& type);

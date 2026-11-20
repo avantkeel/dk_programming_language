@@ -38,7 +38,7 @@ function main() {
 
     // Missing keys read as null, and keys() lists the map's keys.
     terminal.print("Missing: " + (ages["zoe"] ?? 0));
-    for name in ages.keys() {
+    for name: string in ages.keys() {
         terminal.print(name + " is " + ages[name] + " years old");
     }
 }

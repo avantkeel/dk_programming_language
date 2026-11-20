@@ -1,2 +1,2 @@
 // Must fail: http is not global any more, it has to be imported.
-variable res = http.get("http://127.0.0.1:1/");
+variable res: any = http.get("http://127.0.0.1:1/");

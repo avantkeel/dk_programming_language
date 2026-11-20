@@ -1,4 +1,4 @@
-variable m = ["a": 1];
-for key in m {
+variable m: [string: int] = ["a": 1];
+for key: string in m {
     terminal.print(key);
 }

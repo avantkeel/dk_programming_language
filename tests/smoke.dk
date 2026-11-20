@@ -10,7 +10,7 @@ enum Color { Red, Green }
 
 function sum(values: [int]) -> Score {
     variable total: Score = 0;
-    for value in values {
+    for value: int in values {
         total += value;
     }
     return total;
@@ -29,6 +29,6 @@ function main() {
     pet.birthday();
     terminal.print(pet.age);
 
-    variable optional = null;
+    variable optional: any = null;
     terminal.print(optional ?? "fallback");
 }

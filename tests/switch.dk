@@ -1,4 +1,4 @@
-variable value = 2;
+variable value: int = 2;
 
 switch value {
     case 1 {

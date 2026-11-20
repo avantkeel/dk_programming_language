@@ -271,6 +271,7 @@ void Runtime::execute_while(const WhileStmt& statement) {
 }
 
 void Runtime::execute_for(const ForStmt& statement) {
+    validate_type(statement.type);
     const Value iterable = evaluate(statement.iterable);
     std::vector<Value> values;
     if (const auto* range = std::get_if<RangeValue>(&iterable.data)) {
@@ -290,7 +291,8 @@ void Runtime::execute_for(const ForStmt& statement) {
     environment = loop_scope;
     try {
         for (const auto& value : values) {
-            loop_scope->define(statement.name, value);
+            check_type(value, statement.type, "loop variable '" + statement.name + "'");
+            loop_scope->define(statement.name, value, statement.type);
             try {
                 execute(statement.body);
             } catch (const BreakSignal&) {
@@ -834,13 +836,30 @@ Value Runtime::evaluate_field_initializer(const std::shared_ptr<ClassInstance>& 
 void Runtime::check_type(const Value& value, const std::optional<std::string>& type,
                          const std::string& description) {
     if (!type) return;
+    validate_type(*type);
     const auto resolved = resolve_type(*type);
     if (matches_type(value, resolved)) return;
     throw LanguageError(description + " must be '" + *type + "', got '" +
                         value_type_name(value) + "'");
 }
 
+void Runtime::validate_type(const std::string& type) {
+    const auto resolved = resolve_type(type);
+    if (const auto parts = split_map_type(resolved)) {
+        validate_type(parts->first);
+        validate_type(parts->second);
+        return;
+    }
+    if (resolved.size() >= 2 && resolved.front() == '[' && resolved.back() == ']') {
+        validate_type(resolved.substr(1, resolved.size() - 2));
+        return;
+    }
+    if (!type_exists(resolved))
+        throw LanguageError("Unknown type '" + resolved + "'");
+}
+
 bool Runtime::matches_type(const Value& value, const std::string& type) {
+    if (type == "any") return true;
     if (const auto parts = split_map_type(type)) {
         const auto* map = std::get_if<std::shared_ptr<MapValue>>(&value.data);
         if (!map) return false;
@@ -877,7 +896,7 @@ std::string Runtime::resolve_type(const std::string& type, int depth) {
     if (depth > 32) throw LanguageError("Circular type alias involving '" + type + "'");
     if (const auto parts = split_map_type(type)) {
         const auto key = resolve_type(parts->first, depth + 1);
-        if (key == "float" || key == "void" || key.front() == '[' ||
+        if (key == "any" || key == "float" || key == "void" || key.front() == '[' ||
             struct_types.count(key) || classes.count(key))
             throw LanguageError("Map key type must be int, string, bool, or an enum, got '" +
                                 key + "'");
@@ -900,6 +919,7 @@ std::string Runtime::resolve_type(const std::string& type, int depth) {
 
 Value Runtime::default_value(const std::optional<std::string>& type) {
     if (!type) return Value{};
+    validate_type(*type);
     const auto resolved = resolve_type(*type);
     if (resolved == "int") return Value(std::int64_t{0});
     if (resolved == "float") return Value(0.0);
@@ -912,7 +932,7 @@ Value Runtime::default_value(const std::optional<std::string>& type) {
 }
 
 bool Runtime::type_exists(const std::string& name) const {
-    return name == "int" || name == "float" || name == "string" ||
+    return name == "any" || name == "int" || name == "float" || name == "string" ||
            name == "bool" || name == "void" || type_aliases.count(name) ||
            struct_types.count(name) || enum_types.count(name) || classes.count(name);
 }

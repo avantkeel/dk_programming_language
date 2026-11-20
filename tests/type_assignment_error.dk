@@ -1,0 +1,2 @@
+variable count: int = 1;
+count = "not an integer";

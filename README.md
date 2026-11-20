@@ -41,7 +41,7 @@ finishes. Input is read from standard input.
 
 ## Language features
 
-- `int`, `float`, `string`, `bool`, list types such as `[int]`, map types such as
+- `int`, `float`, `string`, `bool`, `any`, list types such as `[int]`, map types such as
   `[string: int]`, and type aliases
 - Variables, arithmetic, comparisons, assignment, `??`, and boolean operators
 - Functions with parameters, return types, and `return`
@@ -49,9 +49,20 @@ finishes. Input is read from standard input.
 - Structs, enums, classes, constructors, inheritance, `this`, `super`, and
   dynamic method dispatch
 - `if` / `else if` / `else`, `switch` / `case` / `default`, `while`,
-  `for value in list`, and integer ranges
+  `for value: Type in list`, and integer ranges
   written as `start..end` (the end is exclusive)
 - `terminal.print`, `terminal.read`, and `terminal.readInt`
+
+Every variable, function parameter, and loop variable must declare a type.
+Initial values and later assignments are checked against that type. Use `any`
+only when a value is intentionally dynamic, such as a parsed JSON document:
+
+```text
+variable count: int = 3;
+for item: string in ["a", "b"] {
+    terminal.print(item);
+}
+```
 
 Statements end with semicolons, except block statements. Type mismatches,
 lexical errors, syntax errors, and runtime errors produce a nonzero exit status.
@@ -87,7 +98,7 @@ terminal.print(ages["zoe"] ?? 0);     // a missing key reads as null
 if ages.has("luis") {
     ages.remove("luis");
 }
-for name in ages.keys() {
+for name: string in ages.keys() {
     terminal.print(name + " is " + ages[name]);
 }
 ```
@@ -150,12 +161,12 @@ import { http } from "std:http";
 
 http.timeout(15);   // seconds, default 30
 
-variable res = http.get("https://api.github.com/repos/torvalds/linux",
+variable res: any = http.get("https://api.github.com/repos/torvalds/linux",
                         ["Accept: application/vnd.github+json"]);
 if res == null {
     terminal.print("failed: " + http.lastError());
 } else if res.ok {
-    variable repo = json.parse(res.body);
+    variable repo: any = json.parse(res.body);
     terminal.print(repo.full_name);
 }
 ```

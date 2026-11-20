@@ -14,7 +14,7 @@ function main() {
     // literals and typed variables
     variable ages: [string: int] = ["ana": 31, "luis": 28];
     variable empty: [string: int] = [:];
-    variable untyped = [1: "one", 2: "two"];
+    variable untyped: [int: string] = [1: "one", 2: "two"];
     variable declared: [string: int];
     variable aliased: Ages = ["x": 1];
     assert(ages.length == 2, "length");
@@ -47,8 +47,8 @@ function main() {
     assert(ages.values()[0] == 33, "values follow key order");
 
     // iteration through keys()
-    variable total = 0;
-    for name in ages.keys() {
+    variable total: int = 0;
+    for name: string in ages.keys() {
         total += ages[name];
     }
     assert(total == 73, "iterate keys");
@@ -74,7 +74,7 @@ function main() {
     variable shared: [string: int] = ["n": 1];
     bump(shared, "n");
     assert(shared["n"] == 2, "function mutates the caller's map");
-    variable alias = shared;
+    variable alias: [string: int] = shared;
     alias["n"] = 9;
     assert(shared["n"] == 9, "assignment shares the same map");
     assert(build()["a"] == 1, "map as a return value");

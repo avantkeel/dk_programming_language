@@ -49,16 +49,16 @@ while number > 0 {
     }
 }
 
-for i in 0..5 {
+for i: int in 0..5 {
     terminal.print(i);
 }
 
-for score in scores {
+for score: int in scores {
     terminal.print(score);
 }
 
 function main() {
-    variable total = add(number, 5);
+    variable total: int = add(number, 5);
     terminal.print("Total: " + total);
 
     variable pet: Animal = new Dog("Rex", 3, "Beagle");

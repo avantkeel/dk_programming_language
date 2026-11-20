@@ -1,0 +1,3 @@
+for item: string in [1] {
+    terminal.print(item);
+}

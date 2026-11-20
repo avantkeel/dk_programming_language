@@ -31,6 +31,12 @@ test: $(TARGET)
 	./$(TARGET) tests/smoke.dk
 	./$(TARGET) examples/main.dk < tests/input.txt
 	! ./$(TARGET) tests/type_error.dk
+	./$(TARGET) tests/unknown_type.dk 2>&1 | grep -q "Unknown type 'MissingType'"
+	./$(TARGET) tests/type_assignment_error.dk 2>&1 | grep -q "must be 'int'"
+	./$(TARGET) tests/untyped_variable.dk 2>&1 | grep -q "Variables must declare a type"
+	./$(TARGET) tests/untyped_parameter.dk 2>&1 | grep -q "Function parameters must declare a type"
+	./$(TARGET) tests/untyped_loop.dk 2>&1 | grep -q "Loop variables must declare a type"
+	./$(TARGET) tests/loop_type_error.dk 2>&1 | grep -q "loop variable 'item' must be 'string'"
 	./$(TARGET) tests/random.dk
 	! ./$(TARGET) tests/assert_fail.dk
 	./$(TARGET) tests/random_module.dk

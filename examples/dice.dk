@@ -1,4 +1,4 @@
-for i in 0..5 {
+for i: int in 0..5 {
     variable first: int = random.int(1, 6);
     variable second: int = random.int(1, 6);
     variable total: int = first + second;

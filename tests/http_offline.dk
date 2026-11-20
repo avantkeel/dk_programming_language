@@ -2,7 +2,7 @@
 import { http } from "std:http";
 
 // Nothing listens on port 1: transport failure gives null, not a crash.
-variable refused = http.get("http://127.0.0.1:1/");
+variable refused: any = http.get("http://127.0.0.1:1/");
 assert(refused == null, "refused connection should return null");
 assert(http.lastError().length > 0, "lastError should explain the failure");
 assert((refused ?? "fallback") == "fallback", "?? works on failed requests");

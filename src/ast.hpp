@@ -64,7 +64,12 @@ struct IfStmt { ExprPtr condition; StmtPtr then_branch; StmtPtr else_branch; };
 struct SwitchCase { ExprPtr value; std::vector<StmtPtr> body; };
 struct SwitchStmt { ExprPtr value; std::vector<SwitchCase> cases; std::optional<std::vector<StmtPtr>> default_body; };
 struct WhileStmt { ExprPtr condition; StmtPtr body; };
-struct ForStmt { std::string name; ExprPtr iterable; StmtPtr body; };
+struct ForStmt {
+    std::string name;
+    std::string type;
+    ExprPtr iterable;
+    StmtPtr body;
+};
 struct ReturnStmt { ExprPtr value; };
 struct BreakStmt {};
 struct ExprStmt { ExprPtr expression; };

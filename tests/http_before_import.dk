@@ -1,3 +1,3 @@
 // Must fail: http is only available after the import statement has run.
-variable res = http.get("http://127.0.0.1:1/");
+variable res: any = http.get("http://127.0.0.1:1/");
 import { http } from "std:http";

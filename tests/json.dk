@@ -1,5 +1,5 @@
 // parse: scalars, nesting, unicode, numbers
-variable doc = json.parse("{\"name\": \"dk\", \"tags\": [1, 2.5, true, null], \"nested\": {\"ok\": false}, \"emoji\": \"\\u00e9\\ud83d\\ude00\"}");
+variable doc: any = json.parse("{\"name\": \"dk\", \"tags\": [1, 2.5, true, null], \"nested\": {\"ok\": false}, \"emoji\": \"\\u00e9\\ud83d\\ude00\"}");
 assert(doc != null, "parse failed");
 assert(doc.name == "dk", "string field");
 assert(doc.tags.length == 4, "array length");
@@ -12,7 +12,7 @@ assert(doc.emoji.length == 6, "utf-8 encoding of escapes");
 
 // whole numbers stay ints, fractions/exponents become floats
 assert(json.parse("42") == 42, "int");
-variable big = json.parse("1e3");
+variable big: any = json.parse("1e3");
 assert(big == 1000.0, "exponent");
 
 // safe lookup helpers
@@ -37,7 +37,7 @@ assert(json.stringify([1, 2, 3]) == "[1,2,3]", "stringify list");
 assert(json.stringify("a\"b\n") == "\"a\\\"b\\n\"", "stringify escapes");
 assert(json.stringify(null) == "null", "stringify null");
 assert(json.stringify(1.0) == "1.0", "float keeps a fractional part");
-variable again = json.parse(json.stringify(doc));
+variable again: any = json.parse(json.stringify(doc));
 assert(again == doc, "round trip");
 assert(json.stringify(json.parse("{\"a\":[1,{\"b\":2}]}")) == "{\"a\":[1,{\"b\":2}]}", "compact");
 assert(json.stringify([1], true) == "[\n  1\n]", "pretty");
